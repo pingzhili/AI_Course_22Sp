@@ -2,3 +2,4 @@
 a repo for Artificial Intelligence course at USTC 2022 Spring
 
 * lab1: A* search & Iterative Deepening A* search & Constraint Satisfaction Problem
+* lab2: Decision tree & SVM & MLP & CNN(with PyTorch)
