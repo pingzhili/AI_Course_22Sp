@@ -36,6 +36,7 @@ class SupportVectorMachine:
         '''
         num_samples, num_features = train_data.shape
         kernel_matrix = np.zeros((num_samples, num_samples))
+        # computing kernel matrix
         for i in range(num_samples):
             for j in range(num_samples):
                 kernel_matrix[i, j] = self.KERNEL(train_data[i], train_data[j])
@@ -52,6 +53,7 @@ class SupportVectorMachine:
         # prob.solve(verbose=True)
         # x = np.ravel(x.value)
 
+        # Convex optimization with `cvxopt`, not using `cvxpy` here because it did not work well for me
         P = cvxopt.matrix(np.outer(train_label, train_label) * kernel_matrix, tc='d')
         q = cvxopt.matrix(np.ones(num_samples) * -1)
         A = cvxopt.matrix(train_label, (1, num_samples), tc='d')
@@ -59,10 +61,11 @@ class SupportVectorMachine:
         G = cvxopt.matrix(np.vstack((np.identity(num_samples) * -1, np.identity(num_samples))))
         h = cvxopt.matrix(
             np.vstack((cvxopt.matrix(np.zeros(num_samples)), cvxopt.matrix(np.ones(num_samples) * self.C))))
+        cvxopt.solvers.options['show_progress'] = False
         minimization = cvxopt.solvers.qp(P, q, G, h, A, b)
         x = np.ravel(minimization['x'])
 
-        idx = x > self.epsilon
+        idx = x > self.epsilon # soft margin
         self.SV = train_data[idx]
         self.SV_alpha = x[idx]
         self.SV_label = train_label[idx]

@@ -53,6 +53,8 @@ class DecisionTree:
         num_samples, num_features = np.shape(features)
         labels = np.expand_dims(labels, axis=1)
         features_labels = np.concatenate((features, labels), axis=1)
+        largest_info_gain, best_feature_idx, best_threshold = 0, 0, 0
+        best_sets = (None, None)
         if num_samples >= self.min_samples_split and depth <= self.max_depth:
             for feature_idx in range(num_features):
                 feature_vals = np.expand_dims(features[:, feature_idx], axis=1)
@@ -61,8 +63,8 @@ class DecisionTree:
                     fl1 = np.array([s for s in features_labels if s[feature_idx] >= threshold])
                     fl2 = np.array([s for s in features_labels if s[feature_idx] < threshold])
                     if len(fl1) > 0 and len(fl2) > 0:
-                        l1 = fl1[:, num_features:]
-                        l2 = fl2[:, num_features:]
+                        l1 = fl1[:, -1]
+                        l2 = fl2[:, -1]
                         info_gain = calc_info_gain(labels, l1, l2)
                         if info_gain > largest_info_gain:
                             largest_info_gain = info_gain
@@ -75,7 +77,7 @@ class DecisionTree:
             return DecisionNode(feature=best_feature_idx, threshold=best_threshold, true_branch=true_branch,
                                 false_branch=false_branch, value=None)
         else:
-            max_count = 0
+            max_count, label_pred = 0, 0
             for label in np.unique(labels):
                 count = len(labels[labels == label])
                 if count > max_count:
@@ -89,14 +91,10 @@ class DecisionTree:
         if tree.value is not None:  # leaf node
             return tree.value
         else:  # non-leaf node
-            feature_val = features[tree.feature_idx]
-            branch = tree.false_branch
-            if isinstance(feature_val, int):
-                if feature_val >= tree.threshold:
-                    branch = tree.true_branch
-            elif feature_val == tree.threshold:
-                branch = tree.true_branch
-            return self._predict_sample(features, branch)
+            if features[tree.feature_idx] >= tree.threshold:
+                return self._predict_sample(features, tree.true_branch)
+            else:
+                return self._predict_sample(features, tree.false_branch)
 
     def print_tree(self, tree=None):
         if tree is None:

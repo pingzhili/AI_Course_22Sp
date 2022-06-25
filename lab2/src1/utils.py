@@ -6,9 +6,9 @@ def get_acc(y, pred):
 
 
 def load_decisiontree_dataset():
-    train_data = np.loadtxt('./dataset/dt/dt_train.data', delimiter=',',
+    train_data = np.loadtxt('/Users/lipingzhi/Desktop/ai_course/lab/lab2/src1/dataset/dt/dt_train.data', delimiter=',',
                             dtype='int64')
-    test_data = np.loadtxt('./dataset/dt/dt_test.data', delimiter=',',
+    test_data = np.loadtxt('/Users/lipingzhi/Desktop/ai_course/lab/lab2/src1/dataset/dt/dt_test.data', delimiter=',',
                            dtype='int64')
     train_features = train_data[:, 1:]
     train_labels = train_data[:, 0]
@@ -19,13 +19,13 @@ def load_decisiontree_dataset():
 
 
 def load_svm_dataset():
-    train_features = np.loadtxt('./dataset/svm/svm_train_data.csv',
+    train_features = np.loadtxt('/Users/lipingzhi/Desktop/ai_course/lab/lab2/src1/dataset/svm/svm_train_data.csv',
                                 delimiter=',', skiprows=1)
-    train_labels = np.loadtxt('./dataset/svm/svm_train_label.csv',
+    train_labels = np.loadtxt('/Users/lipingzhi/Desktop/ai_course/lab/lab2/src1/dataset/svm/svm_train_label.csv',
                               delimiter=',', skiprows=1, dtype=np.int32)
-    test_features = np.loadtxt('./dataset/svm/svm_test_data.csv',
+    test_features = np.loadtxt('/Users/lipingzhi/Desktop/ai_course/lab/lab2/src1/dataset/svm/svm_test_data.csv',
                                delimiter=',', skiprows=1)
-    test_labels = np.loadtxt('./dataset/svm/svm_test_label.csv',
+    test_labels = np.loadtxt('/Users/lipingzhi/Desktop/ai_course/lab/lab2/src1/dataset/svm/svm_test_label.csv',
                              delimiter=',', skiprows=1, dtype=np.int32)
 
     return train_features, train_labels, test_features, test_labels

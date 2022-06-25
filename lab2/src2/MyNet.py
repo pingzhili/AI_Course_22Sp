@@ -15,13 +15,13 @@ class MyNet(nn.Module):
         super(MyNet, self).__init__()
         ########################################################################
         # 这里需要写MyNet的卷积层、池化层和全连接层
-        self.conv_layer = nn.Sequential(nn.Conv2d(3, 8, (9, 9)),
+        self.conv_layer = nn.Sequential(nn.Conv2d(3, 24, (9, 9)),
                                         nn.ReLU(),
                                         nn.MaxPool2d(2),
-                                        nn.Conv2d(8, 4, (3, 3)),
+                                        nn.Conv2d(24, 32, (3, 3)),
                                         nn.ReLU(),
                                         nn.MaxPool2d(2))
-        self.cls_layer = nn.Sequential(nn.Linear(100, 108),
+        self.cls_layer = nn.Sequential(nn.Linear(800, 108),
                                        nn.ReLU(),
                                        nn.Linear(108, 72),
                                        nn.ReLU(),
@@ -78,7 +78,7 @@ def test(net, test_loader, loss_function):
 
 
 if __name__ == '__main__':
-    n_epochs = 5
+    n_epochs = 8
     train_batch_size = 128
     test_batch_size = 5000
     learning_rate = 5e-4
@@ -88,13 +88,13 @@ if __name__ == '__main__':
          transforms.Normalize((0.4914, 0.4822, 0.4465), (0.247, 0.243, 0.261))])
 
     # 50000张训练图片
-    train_set = torchvision.datasets.CIFAR10(root='./data', train=True,
+    train_set = torchvision.datasets.CIFAR10(root='/Users/lipingzhi/Desktop/ai_course/lab/lab2/src2/data', train=True,
                                              download=False, transform=transform)
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=train_batch_size,
                                                shuffle=True, num_workers=0)
 
     # 10000张验证图片
-    test_set = torchvision.datasets.CIFAR10(root='./data', train=False,
+    test_set = torchvision.datasets.CIFAR10(root='/Users/lipingzhi/Desktop/ai_course/lab/lab2/src2/data', train=False,
                                             download=False, transform=transform)
     test_loader = torch.utils.data.DataLoader(test_set, batch_size=test_batch_size,
                                               shuffle=False, num_workers=0)

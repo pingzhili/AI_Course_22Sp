@@ -1,16 +1,36 @@
-from cProfile import label
-from random import shuffle
 import numpy as np
 from matplotlib import pyplot as plt
-from torch import argmax
+import torch
+
+LOSS_STEP = 4
+COMPARE_TO_TORCH = False
+PRINT_NET = True
 
 
-class LinearLayer:
+class NNLayer:
+    def forward(self, x):
+        raise NotImplementedError
+
+    def backward(self, grad_y):
+        raise NotImplementedError
+
+    def train(self):
+        raise NotImplementedError
+
+    def eval(self):
+        raise NotImplementedError
+
+
+class LinearLayer(NNLayer):
+    """
+    Linear layer of MLP network
+    """
+
     def __init__(self, input_size, output_size):
         self.input_size = input_size
         self.output_size = output_size
         self.last_input = None
-        self.weights = np.random.randn(input_size, output_size) * np.sqrt(2/input_size)
+        self.weights = np.random.randn(input_size, output_size) * np.sqrt(2 / input_size)
         self.bias = np.zeros((1, self.output_size))
         self.training = False
 
@@ -34,7 +54,11 @@ class LinearLayer:
         self.training = False
 
 
-class Tanh:
+class Tanh(NNLayer):
+    """
+    Thah layer of MLP network
+    """
+
     def __init__(self):
         self.last_input = None
         self.is_training = False
@@ -55,6 +79,10 @@ class Tanh:
 
 
 class SoftmaxCrossEntropy:
+    """
+    Softmax cross entropy loss layer of MLP network
+    """
+
     def __init__(self):
         pass
 
@@ -130,6 +158,7 @@ def train(mlp: MLP, epochs, lr, inputs, input_labels, batch_size=10):
     num_input = inputs.shape[0]
     input_labels = np.argmax(input_labels, axis=1)
     loss_list = []
+    accum_loss = 0.0
     for epoch in range(epochs):
         start_idx = 0
         shuffle_idx = np.random.permutation(num_input)
@@ -140,10 +169,68 @@ def train(mlp: MLP, epochs, lr, inputs, input_labels, batch_size=10):
             batch_label = input_labels[batch_idx]
             loss = mlp.backward(batch_input, batch_label, lr)
             global_step += 1
-            loss_list.append(loss)
+            accum_loss += loss
             start_idx += batch_size
-            if global_step % 1 == 0:
-                print(f"Global step: {global_step}, epoch: {epoch}, loss: {loss}")
+            if global_step % LOSS_STEP == 0:
+                loss_list.append(accum_loss / LOSS_STEP)
+                accum_loss = 0.0
+                print(f"[Manual]Global step: {global_step}, epoch: {epoch}, loss: {loss}")
+    if PRINT_NET:
+        for i in range(len(mlp.layers)):
+            if i % 2 == 0:
+                print(f"Layer {int(i / 2)} weights:")
+                print(mlp.layers[i].weights)
+                print(f"Layer {int(i / 2)} bias:")
+                print(mlp.layers[i].bias)
+    return loss_list
+
+
+def train_torch_mlp(epochs, lr, inputs, input_labels, batch_size):
+    class TorchMLP(torch.nn.Module):
+        def __init__(self):
+            super(TorchMLP, self).__init__()
+            self.mlp = torch.nn.Sequential(
+                torch.nn.Linear(10, 10),
+                torch.nn.Tanh(),
+                torch.nn.Linear(10, 8),
+                torch.nn.Tanh(),
+                torch.nn.Linear(8, 8),
+                torch.nn.Tanh(),
+                torch.nn.Linear(8, 4)
+            )
+            self.loss = torch.nn.CrossEntropyLoss()
+
+        def forward(self, x):
+            return self.mlp(x)
+
+    net = TorchMLP()
+    net.train()
+    optim = torch.optim.SGD(net.parameters(), lr=lr)
+    global_step = 0
+    num_input = inputs.shape[0]
+    input_labels = np.argmax(input_labels, axis=1)
+    loss_list = []
+    accum_loss = 0.0
+    for epoch in range(epochs):
+        start_idx = 0
+        shuffle_idx = np.random.permutation(num_input)
+        while start_idx < num_input:
+            end_idx = min(start_idx + batch_size, num_input)
+            batch_idx = shuffle_idx[start_idx:end_idx]
+            batch_input = torch.tensor(inputs[batch_idx], dtype=torch.float32)
+            batch_label = torch.tensor(input_labels[batch_idx], dtype=torch.long)
+            pred = net(batch_input)
+            loss = net.loss(pred, batch_label)
+            global_step += 1
+            accum_loss += loss.item()
+            optim.zero_grad()
+            loss.backward()
+            optim.step()
+            start_idx += batch_size
+            if global_step % LOSS_STEP == 0:
+                loss_list.append(accum_loss / LOSS_STEP)
+                accum_loss = 0.0
+                print(f"[Torch]Global step: {global_step}, epoch: {epoch}, loss: {loss}")
     return loss_list
 
 
@@ -158,7 +245,15 @@ if __name__ == '__main__':
     labels = np.eye(4)[np.random.randint(0, 4, size=(1, 100))].reshape(100, 4)
 
     # 训练
-    epochs = 1000
+    epochs = 1100
     lr = 1e-2
     batch_size = 10
-    loss_list = train(mlp, epochs, lr, inputs, labels.astype(int), batch_size)
+    manual_loss_list = train(mlp, epochs, lr, inputs, labels.astype(int), batch_size)
+
+    if COMPARE_TO_TORCH:
+        torch_loss_list = train_torch_mlp(epochs, lr, inputs, labels.astype(int), batch_size)
+        plt.ylim(-0.1, 2.0)
+        plt.plot(manual_loss_list, label='Manual MLP')
+        plt.plot(torch_loss_list, label='Torch MLP')
+        plt.legend()
+        plt.show()
