@@ -16,7 +16,7 @@ def calc_info_gain(l, l1, l2):
         unique_labels = np.unique(y)
         entropy = 0
         for label in unique_labels:
-            _p = len(l[l == label]) / len(l)
+            _p = len(y[y == label]) / len(y)
             entropy += - _p * log2(_p)
         return entropy
 
